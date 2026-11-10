@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>VoicePlace · Di en tu Celular & Laptop (Sincronizado)</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#090D16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #090D16;
+            --bg-card: rgba(15, 23, 42, 0.88);
+            --bg-elevated: #162033;
+            --border-card: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(56, 189, 248, 0.55);
+            --text-main: #F8FAFC;
+            --text-secondary: #CBD5E1;
+            --text-muted: #94A3B8;
+            --accent-emerald: #10B981;
+            --accent-sky: #38BDF8;
+            --accent-blue: #2563EB;
+            --accent-amber: #F59E0B;
+            --accent-rose: #F43F5E;
+
+            /* Custom Slider System (modern-web-guidance: slider) */
+            --slider-track-size: 0.55rem;
+            --slider-thumb-size: 1.45rem;
+            --slider-track-radius: 999px;
+            --slider-thumb-radius: 50%;
+            --slider-track-color: rgba(255, 255, 255, 0.12);
+            --slider-fill-color: #38BDF8;
+            --slider-thumb-color: #38BDF8;
+            --slider-direction: to right;
+            --attr-min: 0.5;
+            --attr-max: 3.0;
+            --control-value: 1.0;
+            --slider-progress: calc(((var(--control-value) - var(--attr-min)) / (var(--attr-max) - var(--attr-min))) * 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            background-color: var(--bg-base);
+            background-image:
+                radial-gradient(circle at 12% 10%, rgba(56, 189, 248, 0.09), transparent 45%),
+                radial-gradient(circle at 88% 15%, rgba(16, 185, 129, 0.08), transparent 45%);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding: 14px 14px 110px; /* Margen inferior para no tapar el mini reproductor */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 660px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Header Bar */
+        header.top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 12px 16px;
+            backdrop-filter: blur(12px);
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-sky), var(--accent-emerald));
+            display: grid;
+            place-items: center;
+            font-size: 20px;
+            box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);
+        }
+        .brand-titles h1 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .brand-titles p {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+        }
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Sync Status & Audio Unlock Pill */
+        .sync-pill {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            border-radius: 12px;
+            padding: 9px 14px;
+            font-size: 0.8rem;
+            color: #A7F3D0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .sync-pill.unlocked {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.4);
+            color: #BAE6FD;
+        }
+        .dot-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10B981;
+            box-shadow: 0 0 10px #10B981;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        button, .btn {
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            border-radius: 10px;
+            padding: 9px 13px;
+            cursor: pointer;
+            border: 1px solid var(--border-card);
+            background: var(--bg-elevated);
+            color: var(--text-main);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.16s ease;
+        }
+        button:hover, .btn:hover {
+            border-color: var(--border-focus);
+            transform: translateY(-1px);
+        }
+        button:active, .btn:active {
+            transform: translateY(0);
+        }
+        .btn-sky {
+            background: linear-gradient(135deg, #0284C7, #2563EB);
+            border-color: rgba(56, 189, 248, 0.4);
+            color: white;
+        }
+        .btn-emerald {
+            background: linear-gradient(135deg, #10B981, #059669);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: white;
+        }
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 0.74rem;
+            border-radius: 8px;
+        }
+
+        /* Target Mode Selector: Celular vs Laptop */
+        .target-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .target-btn {
+            padding: 12px 10px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.04);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .target-btn .icon { font-size: 22px; }
+        .target-btn .title { font-size: 0.86rem; font-weight: 800; }
+        .target-btn .desc { font-size: 0.7rem; color: var(--text-muted); text-align: center; }
+        .target-btn.active {
+            background: rgba(56, 189, 248, 0.14);
+            border-color: var(--accent-sky);
+            box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
+        }
+        .target-btn.active.laptop-active {
+            background: rgba(16, 185, 129, 0.14);
+            border-color: var(--accent-emerald);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Main Form Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            backdrop-filter: blur(12px);
+        }
+
+        .textarea-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+        .textarea-actions { display: flex; gap: 6px; }
+        textarea#text-input {
+            width: 100%;
+            height: 130px;
+            background: #090D16;
+            color: var(--text-main);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 12px;
+            font-family: inherit;
+            font-size: 0.94rem;
+            line-height: 1.5;
+            resize: vertical;
+        }
+        textarea#text-input:focus {
+            outline: 2px solid var(--accent-sky);
+            border-color: transparent;
+        }
+
+        .duration-strip {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 9px 12px;
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.22);
+            border-radius: 12px;
+            font-size: 0.78rem;
+        }
+        .duration-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 0.88rem;
+            color: #38BDF8;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        label.field-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .voice-search-box { display: flex; gap: 8px; margin-bottom: 4px; }
+        input.search-input {
+            width: 100%;
+            background: #090D16;
+            color: var(--text-main);
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            padding: 9px 12px;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+        input.search-input:focus {
+            outline: 2px solid var(--accent-sky);
+            border-color: transparent;
+        }
+        select#voice-select {
+            width: 100%;
+            background: #090D16;
+            color: var(--text-main);
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 0.88rem;
+        }
+
+        .speed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .speed-val-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--accent-sky);
+        }
+
+        /* Range Slider per modern-web-guidance */
+        input[type="range"] {
+            appearance: none;
+            inline-size: 100%;
+            block-size: 2.2rem;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]:focus-visible {
+            outline: 2px solid var(--slider-fill-color);
+            outline-offset: 4px;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            block-size: var(--slider-track-size);
+            border: 0;
+            border-radius: var(--slider-track-radius);
+            background: linear-gradient(
+                var(--slider-direction),
+                var(--slider-fill-color) var(--slider-progress),
+                var(--slider-track-color) var(--slider-progress)
+            );
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            inline-size: var(--slider-thumb-size);
+            block-size: var(--slider-thumb-size);
+            margin-block-start: calc((var(--slider-track-size) - var(--slider-thumb-size)) / 2);
+            border: 0;
+            border-radius: var(--slider-thumb-radius);
+            background: var(--slider-thumb-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        input[type="range"]::-moz-range-track {
+            block-size: var(--slider-track-size);
+            border: 0;
+            border-radius: var(--slider-track-radius);
+            background: var(--slider-track-color);
+        }
+        input[type="range"]::-moz-range-progress {
+            block-size: var(--slider-track-size);
+            border-radius: var(--slider-track-radius);
+            background: var(--slider-fill-color);
+        }
+        input[type="range"]::-moz-range-thumb {
+            inline-size: var(--slider-thumb-size);
+            block-size: var(--slider-thumb-size);
+            border: 0;
+            border-radius: var(--slider-thumb-radius);
+            background: var(--slider-thumb-color);
+        }
+
+        .speed-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+        .preset-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            padding: 5px 9px;
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .preset-btn:hover, .preset-btn.active {
+            background: rgba(56, 189, 248, 0.16);
+            border-color: var(--accent-sky);
+            color: #FFFFFF;
+        }
+
+        .btn-speak-main {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.02rem;
+            font-weight: 800;
+            border-radius: 14px;
+            box-shadow: 0 6px 24px rgba(56, 189, 248, 0.35);
+        }
+
+        /* Historial de Audios Recientes */
+        .history-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .section-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.86rem;
+            font-weight: 800;
+            color: var(--text-secondary);
+            padding: 0 4px;
+        }
+        .history-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .history-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .history-card:hover {
+            border-color: rgba(56, 189, 248, 0.3);
+            background: #111A2E;
+        }
+        .history-card.playing-now {
+            border-color: var(--accent-sky);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+        .history-meta-pill {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(16, 185, 129, 0.15);
+            color: #6EE7B7;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+        .history-text {
+            font-size: 0.88rem;
+            line-height: 1.4;
+            color: #E2E8F0;
+        }
+        .history-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 4px;
+        }
+
+        /* REPRODUCTOR FLOTANTE MINIMIZADO EN PANTALLA (Bottom Mini-Player) */
+        .mini-player-bar {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 24px);
+            max-width: 660px;
+            background: rgba(15, 23, 42, 0.94);
+            border: 1px solid var(--border-focus);
+            border-radius: 18px;
+            padding: 10px 14px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(14px);
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 90;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translate(-50%, 40px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .mini-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .mini-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+        }
+        .mini-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #F8FAFC;
+        }
+        .mini-sub {
+            font-size: 0.72rem;
+            color: var(--accent-sky);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .mini-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .mini-canvas-box {
+            width: 100%;
+            height: 24px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #060911;
+        }
+        canvas#mini-visualizer {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Dialog styling (modern-web-guidance: light-dismiss-a-dialog) */
+        dialog {
+            margin: auto;
+            width: min(440px, 92vw);
+            background: #0F172A;
+            color: var(--text-main);
+            border: 1px solid var(--border-focus);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+        }
+        dialog::backdrop {
+            background-color: rgba(2, 6, 23, 0.75);
+            backdrop-filter: blur(4px);
+        }
+        .qr-image {
+            width: 210px;
+            height: 210px;
+            border-radius: 12px;
+            display: block;
+            margin: 14px auto;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        }
+
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10B981;
+            color: #042F2E;
+            font-weight: 800;
+            font-size: 0.84rem;
+            padding: 10px 18px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 100;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <header class="top-bar">
+        <div class="brand">
+            <div class="logo-box">🎙️</div>
+            <div class="brand-titles">
+                <h1>VoicePlace</h1>
+                <p>Sincronización Celular &amp; Laptop</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-sm btn-sky" onclick="openQrModal()">📲 QR Celular</button>
+        </div>
+    </header>
+
+    <!-- Tap to unlock audio on phone banner -->
+    <div class="sync-pill" id="audio-unlock-banner" onclick="unlockAudioContext()">
+        <div>
+            <span class="dot-pulse"></span>
+            <span id="unlock-text"><b>Toca aquí una vez</b> para activar audio en este celular</span>
+        </div>
+        <span style="font-size:0.75rem; text-decoration:underline;">Habilitar</span>
+    </div>
+
+    <!-- Target Output Toggle -->
+    <div class="target-box">
+        <div class="target-btn active" id="btn-target-device" onclick="setTarget('device')">
+            <span class="icon">📱</span>
+            <span class="title">Sonar en el Celular</span>
+            <span class="desc">Transmite al teléfono y abre reproductor flotante</span>
+        </div>
+        <div class="target-btn" id="btn-target-laptop" onclick="setTarget('laptop')">
+            <span class="icon">💻</span>
+            <span class="title">Mandar a la Laptop</span>
+            <span class="desc">Ejecuta Di en el computador y suena por VLC</span>
+        </div>
+    </div>
+
+    <main class="card">
+        <div class="textarea-header">
+            <span>📝 TEXTO A HABLAR</span>
+            <div class="textarea-actions">
+                <button type="button" class="btn-sm" onclick="pasteClipboard()">📋 Pegar</button>
+                <button type="button" class="btn-sm" onclick="clearText()">✕ Borrar</button>
+            </div>
+        </div>
+        <textarea id="text-input" placeholder="Escribe o pega aquí cualquier texto sin límites para que Di lo lea..." oninput="updateCalculations()"></textarea>
+
+        <!-- Live Duration Calculation Strip -->
+        <div class="duration-strip">
+            <div>
+                <span style="color:var(--text-muted)">Palabras: </span><b id="count-words">0</b>
+                <span style="color:var(--text-muted); margin-left:8px;">Caracteres: </span><b id="count-chars">0</b>
+            </div>
+            <div>
+                <span style="color:var(--text-muted)">⏱️ Duración estimada: </span>
+                <span class="duration-badge" id="est-duration">0 seg</span>
+            </div>
+        </div>
+
+        <!-- Voice Selector (318 Voices matching Calcifer) -->
+        <div class="form-group">
+            <label class="field-label" for="voice-search">1️⃣ Voz (318 disponibles · Edge-TTS Multicadena):</label>
+            <div class="voice-search-box">
+                <input type="search" class="search-input" id="voice-search" placeholder="Buscar país, mujer, hombre o nombre..." oninput="filterVoices()">
+            </div>
+            <select id="voice-select" onchange="onVoiceChange()"></select>
+        </div>
+
+        <!-- Speed Range Slider per modern-web-guidance -->
+        <div class="form-group">
+            <div class="speed-header">
+                <label class="field-label" for="speed-slider">2️⃣ Velocidad de Habla:</label>
+                <span class="speed-val-badge" id="speed-label">1.0x</span>
+            </div>
+            <input type="range" id="speed-slider" min="0.5" max="3.0" step="0.05" value="1.0" oninput="onSpeedSlider(this.value)">
+            <div class="speed-presets">
+                <button type="button" class="preset-btn" onclick="setSpeed(0.8)">0.8x Lento</button>
+                <button type="button" class="preset-btn active" onclick="setSpeed(1.0)">1.0x Normal ⭐</button>
+                <button type="button" class="preset-btn" onclick="setSpeed(1.2)">1.2x Ágil</button>
+                <button type="button" class="preset-btn" onclick="setSpeed(1.5)">1.5x Rápido</button>
+                <button type="button" class="preset-btn" onclick="setSpeed(1.65)">1.65x Di Default</button>
+                <button type="button" class="preset-btn" onclick="setSpeed(2.0)">2.0x Doble</button>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-sky btn-speak-main" id="btn-speak" onclick="triggerSpeak()">
+            <span id="btn-icon">▶️</span> <span id="btn-label">Hacer sonar en el Celular</span>
+        </button>
+    </main>
+
+    <!-- Historial de Audios Reproducidos (Inbox / Playlist) -->
+    <section class="history-section">
+        <div class="section-title-row">
+            <span>📜 HISTORIAL DE AUDIOS SINTETIZADOS</span>
+            <button class="btn-sm" onclick="loadHistory()">🔄 Actualizar</button>
+        </div>
+        <div class="history-feed" id="history-feed">
+            <div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding:12px;">Cargando historial...</div>
+        </div>
+    </section>
+</div>
+
+<!-- REPRODUCTOR FLOTANTE MINIMIZADO EN PANTALLA -->
+<div class="mini-player-bar" id="mini-player">
+    <div class="mini-top">
+        <div class="mini-info">
+            <div class="mini-title" id="mini-text-title">Audio cargado</div>
+            <div class="mini-sub" id="mini-sub-meta">⏱️ 0:00 / 0:00 · Salomé</div>
+        </div>
+        <div class="mini-controls">
+            <button type="button" class="btn-sm" onclick="replayCurrentAudio()" title="Repetir audio desde el inicio">↻ Repetir</button>
+            <button type="button" class="btn-sm btn-sky" id="btn-mini-play" onclick="togglePlayPause()">⏸️ Pausa</button>
+            <button type="button" class="btn-sm" onclick="openDedicatedPlayer(CURRENT_AUDIO_ID)" title="Abrir en ventana grande dedicada">🔍 Expandir</button>
+            <button type="button" class="btn-sm" onclick="hideMiniPlayer()" title="Cerrar reproductor">✕</button>
+        </div>
+    </div>
+    <div class="mini-canvas-box">
+        <canvas id="mini-visualizer"></canvas>
+    </div>
+    <audio id="global-audio" preload="auto"></audio>
+</div>
+
+<!-- QR Code Modal (closedby="any") -->
+<dialog id="qr-dialog" closedby="any" aria-labelledby="qr-dialog-title">
+    <form method="dialog">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h2 id="qr-dialog-title" style="font-size:1.05rem;">📲 Abrir en tu Celular</h2>
+            <button type="submit" class="btn-sm">✕ Cerrar</button>
+        </div>
+        <p style="font-size:0.8rem; color:var(--text-secondary); text-align:center;">
+            Apunta la cámara de tu celular a este código para abrir VoicePlace y recibir audios al instante:
+        </p>
+        <img class="qr-image" id="qr-img" src="/api/qr?target=lan" alt="Código QR VoicePlace">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <button type="button" class="btn btn-sm" onclick="copyUrl('lan')">📋 Copiar enlace Wi-Fi Local</button>
+            <button type="button" class="btn btn-sm" onclick="copyUrl('ts')">🌐 Copiar enlace Tailscale</button>
+        </div>
+    </form>
+</dialog>
+
+<div id="toast"></div>
+
+<script>
+    let ALL_VOICES = [];
+    let CURRENT_TARGET = "device";
+    let SERVER_INFO = {};
+    let CURRENT_AUDIO_ID = null;
+    let IS_AUDIO_UNLOCKED = false;
+    let WS_CONNECTION = null;
+
+    const audioEl = document.getElementById("global-audio");
+    const miniBar = document.getElementById("mini-player");
+    const canvas = document.getElementById("mini-visualizer");
+    const ctx = canvas.getContext("2d");
+
+    // Fallback obligatorio de light-dismiss para navegadores sin closedby nativo
+    if (!('closedBy' in HTMLDialogElement.prototype)) {
+        const dialog = document.getElementById('qr-dialog');
+        dialog.addEventListener('click', (event) => {
+            if (event.target !== dialog) return;
+            const rect = dialog.getBoundingClientRect();
+            const isContent = (
+                rect.top <= event.clientY && event.clientY <= rect.top + rect.height &&
+                rect.left <= event.clientX && event.clientX <= rect.left + rect.width
+            );
+            if (!isContent) dialog.close();
+        });
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.style.display = "block";
+        clearTimeout(window.__tt);
+        window.__tt = setTimeout(() => { t.style.display = "none"; }, 3800);
+    }
+
+    async function initApp() {
+        try {
+            const rInfo = await fetch("/api/info");
+            SERVER_INFO = await rInfo.json();
+
+            const rVoices = await fetch("/api/voices");
+            ALL_VOICES = await rVoices.json();
+
+            renderVoices(ALL_VOICES);
+
+            const savedVoice = localStorage.getItem("vp_voice") || "es-CO-SalomeNeural";
+            document.getElementById("voice-select").value = savedVoice;
+
+            const savedSpeed = parseFloat(localStorage.getItem("vp_speed") || "1.0");
+            setSpeed(savedSpeed);
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            }
+
+            setupWebSocket();
+            setupAudioEvents();
+            setupVisualizer();
+            loadHistory();
+            updateCalculations();
+
+            // Desbloquear audio automáticamente al primer toque en la pantalla
+            document.body.addEventListener("click", () => {
+                if (!IS_AUDIO_UNLOCKED) unlockAudioContext();
+            }, { once: true });
+        } catch (e) {
+            console.error("Init error", e);
+        }
+    }
+
+    function unlockAudioContext() {
+        IS_AUDIO_UNLOCKED = true;
+        audioEl.play().catch(() => {});
+        audioEl.pause();
+        const banner = document.getElementById("audio-unlock-banner");
+        banner.className = "sync-pill unlocked";
+        document.getElementById("unlock-text").innerHTML = "🟢 <b>Celular listo y conectado</b>: reproducirá en vivo audios de la laptop";
+        showToast("🔊 Audio habilitado en este dispositivo");
+    }
+
+    // WebSocket en tiempo real
+    function setupWebSocket() {
+        const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const wsUrl = `${proto}//${window.location.host}/ws`;
+
+        try {
+            WS_CONNECTION = new WebSocket(wsUrl);
+
+            WS_CONNECTION.onopen = () => {
+                console.log("WebSocket VoicePlace conectado");
+            };
+
+            WS_CONNECTION.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === "new_audio" && data.audio) {
+                        onIncomingAudio(data.audio, data.auto_play);
+                    }
+                } catch (e) {}
+            };
+
+            WS_CONNECTION.onclose = () => {
+                setTimeout(setupWebSocket, 3000); // Reconectar automáticamente
+            };
+        } catch (e) {
+            // Fallback a polling si WebSockets falla
+            setInterval(loadHistory, 4000);
+        }
+    }
+
+    function onIncomingAudio(audioItem, autoPlay) {
+        loadHistory(); // Refrescar lista
+        showToast(`🎙️ Audio recibido: ${audioItem.duracion_formateada}`);
+        playAudioItem(audioItem, autoPlay);
+    }
+
+    function playAudioItem(item, autoPlay = true) {
+        CURRENT_AUDIO_ID = item.id;
+        audioEl.src = item.audio_url;
+
+        // Actualizar mini reproductor flotante
+        miniBar.style.display = "flex";
+        document.getElementById("mini-text-title").textContent = item.texto;
+        document.getElementById("mini-sub-meta").textContent = `⏱️ ${item.duracion_formateada} · ${item.voz_label}`;
+
+        // Resaltar en historial
+        document.querySelectorAll(".history-card").forEach(c => c.classList.remove("playing-now"));
+        const activeCard = document.getElementById(`hist-${item.id}`);
+        if (activeCard) activeCard.classList.add("playing-now");
+
+        if (autoPlay) {
+            audioEl.play().then(() => {
+                document.getElementById("btn-mini-play").textContent = "⏸️ Pausa";
+            }).catch(() => {
+                document.getElementById("btn-mini-play").textContent = "▶️ Play";
+                showToast("Toca el botón Play del reproductor para escuchar");
+            });
+        }
+    }
+
+    function setupAudioEvents() {
+        audioEl.addEventListener("play", () => {
+            document.getElementById("btn-mini-play").textContent = "⏸️ Pausa";
+        });
+        audioEl.addEventListener("pause", () => {
+            document.getElementById("btn-mini-play").textContent = "▶️ Play";
+        });
+        audioEl.addEventListener("ended", () => {
+            document.getElementById("btn-mini-play").textContent = "▶️ Play";
+        });
+        audioEl.addEventListener("timeupdate", () => {
+            const cur = formatSec(audioEl.currentTime);
+            const tot = formatSec(audioEl.duration || 0);
+            const sub = document.getElementById("mini-sub-meta");
+            if (sub && sub.dataset.staticMeta) {
+                sub.textContent = `⏱️ ${cur} / ${tot} · ${sub.dataset.staticMeta}`;
+            }
+        });
+    }
+
+    function formatSec(s) {
+        const sec = Math.floor(s);
+        const m = Math.floor(sec / 60);
+        const rem = sec % 60;
+        return `${m}:${rem < 10 ? '0' : ''}${rem}`;
+    }
+
+    function togglePlayPause() {
+        if (audioEl.paused) {
+            audioEl.play();
+        } else {
+            audioEl.pause();
+        }
+    }
+
+    function replayCurrentAudio() {
+        audioEl.currentTime = 0;
+        audioEl.play();
+        showToast("↻ Repitiendo audio");
+    }
+
+    function hideMiniPlayer() {
+        audioEl.pause();
+        miniBar.style.display = "none";
+    }
+
+    function openDedicatedPlayer(id) {
+        if (!id) return;
+        window.open(`/player/${id}`, '_blank');
+    }
+
+    async function loadHistory() {
+        const feed = document.getElementById("history-feed");
+        try {
+            const res = await fetch("/api/history?limit=25");
+            const items = await res.json();
+            if (!items.length) {
+                feed.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding:12px;">Aún no hay audios generados. Escribe algo arriba y pulsa Enviar.</div>`;
+                return;
+            }
+            feed.innerHTML = items.map(item => `
+                <div class="history-card ${CURRENT_AUDIO_ID === item.id ? 'playing-now' : ''}" id="hist-${item.id}">
+                    <div class="history-header">
+                        <span>${escapeHtml(item.fecha_hora)} · ${escapeHtml(item.origen === 'laptop' ? '💻 Laptop' : '📱 Celular')}</span>
+                        <span class="history-meta-pill">⏱️ ${escapeHtml(item.duracion_formateada)} (${item.duracion_segundos}s)</span>
+                    </div>
+                    <div class="history-text">${escapeHtml(item.texto)}</div>
+                    <div class="history-actions">
+                        <button type="button" class="btn-sm btn-sky" onclick="playAudioById('${item.id}')">▶️ Reproducir</button>
+                        <button type="button" class="btn-sm" onclick="openDedicatedPlayer('${item.id}')">🔍 Ventana dedicada</button>
+                        <a class="btn btn-sm" href="${item.audio_url}" download="voice_${item.id}.mp3">⬇️ MP3</a>
+                    </div>
+                </div>
+            `).join("");
+        } catch (e) {}
+    }
+
+    async function playAudioById(id) {
+        try {
+            const res = await fetch("/api/history?limit=40");
+            const items = await res.json();
+            const found = items.find(x => x.id === id);
+            if (found) {
+                playAudioItem(found, true);
+            }
+        } catch (e) {}
+    }
+
+    function renderVoices(voices) {
+        const sel = document.getElementById("voice-select");
+        sel.innerHTML = voices.map(v => `<option value="${v.id}">${v.label}</option>`).join("");
+    }
+
+    function filterVoices() {
+        const q = document.getElementById("voice-search").value.toLowerCase().trim();
+        if (!q) {
+            renderVoices(ALL_VOICES);
+            return;
+        }
+        const filtered = ALL_VOICES.filter(v => v.label.toLowerCase().includes(q) || v.id.toLowerCase().includes(q));
+        renderVoices(filtered);
+    }
+
+    function onVoiceChange() {
+        const v = document.getElementById("voice-select").value;
+        localStorage.setItem("vp_voice", v);
+    }
+
+    function setSpeed(val) {
+        const slider = document.getElementById("speed-slider");
+        slider.value = val;
+        onSpeedSlider(val);
+    }
+
+    function onSpeedSlider(val) {
+        const num = parseFloat(val);
+        document.getElementById("speed-label").textContent = `${num.toFixed(2)}x`;
+        localStorage.setItem("vp_speed", num);
+
+        const slider = document.getElementById("speed-slider");
+        slider.style.setProperty('--control-value', num);
+
+        document.querySelectorAll(".preset-btn").forEach(btn => {
+            const t = btn.textContent;
+            if (t.includes(`${num.toFixed(1)}x`) || (num === 1.65 && t.includes("1.65x"))) {
+                btn.classList.add("active");
+            } else {
+                btn.classList.remove("active");
+            }
+        });
+
+        updateCalculations();
+    }
+
+    function setTarget(t) {
+        CURRENT_TARGET = t;
+        const bDev = document.getElementById("btn-target-device");
+        const bLap = document.getElementById("btn-target-laptop");
+        const bMain = document.getElementById("btn-speak");
+        const bLbl = document.getElementById("btn-label");
+
+        if (t === "device") {
+            bDev.classList.add("active");
+            bLap.classList.remove("active", "laptop-active");
+            bMain.className = "btn btn-sky btn-speak-main";
+            bLbl.textContent = "Hacer sonar en el Celular";
+        } else {
+            bLap.classList.add("active", "laptop-active");
+            bDev.classList.remove("active");
+            bMain.className = "btn btn-emerald btn-speak-main";
+            bLbl.textContent = "Mandar a sonar a la Laptop (Di)";
+        }
+    }
+
+    function updateCalculations() {
+        const text = document.getElementById("text-input").value.trim();
+        const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+        const chars = text.length;
+        const speed = parseFloat(document.getElementById("speed-slider").value) || 1.0;
+
+        document.getElementById("count-words").textContent = words;
+        document.getElementById("count-chars").textContent = chars;
+
+        if (words === 0) {
+            document.getElementById("est-duration").textContent = "0 seg";
+            return;
+        }
+
+        const totalSecs = Math.max(1.5, Math.round((words / 150) * 60 / speed));
+        const mins = Math.floor(totalSecs / 60);
+        const secs = totalSecs % 60;
+        const fmt = mins === 0 ? `${secs} seg` : `${mins} min ${secs} seg`;
+        document.getElementById("est-duration").textContent = `${fmt} (a ${speed.toFixed(2)}x)`;
+    }
+
+    async function triggerSpeak() {
+        const text = document.getElementById("text-input").value.trim();
+        if (!text) {
+            showToast("⚠️ Escribe o pega algún texto primero.");
+            return;
+        }
+
+        const voice = document.getElementById("voice-select").value || "es-CO-SalomeNeural";
+        const speed = parseFloat(document.getElementById("speed-slider").value) || 1.0;
+        const btn = document.getElementById("btn-speak");
+        const originalText = document.getElementById("btn-label").textContent;
+
+        btn.disabled = true;
+        document.getElementById("btn-icon").textContent = "⏳";
+        document.getElementById("btn-label").textContent = "Generando y transmitiendo...";
+
+        try {
+            const resp = await fetch("/api/speak", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: text,
+                    voice: voice,
+                    speed: speed,
+                    target: CURRENT_TARGET
+                })
+            });
+
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || "Error en el servidor");
+
+            if (CURRENT_TARGET === "laptop") {
+                showToast(`💻 Enviado a la Laptop · Duración: ${data.audio.duracion_formateada}`);
+            } else {
+                showToast(`📱 Reproduciendo en Celular · ${data.audio.duracion_formateada}`);
+                playAudioItem(data.audio, true);
+            }
+            loadHistory();
+        } catch (err) {
+            showToast(`❌ ${err.message}`);
+        } finally {
+            btn.disabled = false;
+            document.getElementById("btn-icon").textContent = "▶️";
+            document.getElementById("btn-label").textContent = originalText;
+        }
+    }
+
+    function clearText() {
+        document.getElementById("text-input").value = "";
+        updateCalculations();
+    }
+
+    async function pasteClipboard() {
+        try {
+            const txt = await navigator.clipboard.readText();
+            if (txt) {
+                document.getElementById("text-input").value = txt;
+                updateCalculations();
+                showToast("📋 Texto pegado");
+            }
+        } catch (e) {
+            showToast("Mantén presionado el cuadro de texto para pegar.");
+        }
+    }
+
+    function openQrModal() {
+        document.getElementById("qr-dialog").showModal();
+    }
+
+    function copyUrl(type) {
+        const url = (type === "ts" && SERVER_INFO.tailscale_url) ? SERVER_INFO.tailscale_url : SERVER_INFO.lan_url;
+        navigator.clipboard.writeText(url).then(() => {
+            showToast(`Enlace copiado: ${url}`);
+        });
+    }
+
+    function escapeHtml(str) {
+        return String(str ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    // Mini visualizador de ondas reactivo
+    function setupVisualizer() {
+        function resize() {
+            canvas.width = canvas.clientWidth * window.devicePixelRatio;
+            canvas.height = canvas.clientHeight * window.devicePixelRatio;
+        }
+        resize();
+        window.addEventListener("resize", resize);
+
+        let phase = 0;
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const w = canvas.width, h = canvas.height, mid = h / 2, bars = 36, barW = w / bars;
+            const active = !audioEl.paused && !audioEl.ended;
+
+            for (let i = 0; i < bars; i++) {
+                const mult = active ? (Math.sin(i * 0.35 + phase) * 0.4 + Math.cos(i * 0.2 - phase) * 0.4) : 0.08;
+                const barH = Math.max(3, Math.abs(mult) * (h * 0.85));
+                const x = i * barW;
+                const y = mid - barH / 2;
+
+                ctx.fillStyle = active ? "#38BDF8" : "rgba(56, 189, 248, 0.25)";
+                ctx.fillRect(x + 1, y, barW - 2, barH);
+            }
+            if (active) phase += 0.2;
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+
+    window.addEventListener("DOMContentLoaded", initApp);
+</script>
+</body>
+</html>
